@@ -1,7 +1,424 @@
-<html>
-	<head>
-	</head>
-	<body>
-		Homework 4 index.html here
-	</body>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<style>
+  body {
+    padding: 100px;
+    width: 1000px;
+    margin: auto;
+    text-align: left;
+    font-weight: 300;
+    font-family: 'Open Sans', sans-serif;
+    color: #121212;
+  }
+  h1, h2, h3, h4 {
+    font-family: 'Source Sans Pro', sans-serif;
+  }
+</style>
+<title>CS 184 Mesh Editor</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link href="https://fonts.googleapis.com/css?family=Open+Sans|Source+Sans+Pro" rel="stylesheet">
+</head>
+
+
+<body>
+
+<h1 align="middle">CS 184: Computer Graphics and Imaging, Spring 2017</h1>
+<h1 align="middle">Project 4: Cloth Simulator</h1>
+<h2 align="middle">Aaron Xu, CS184-Spring 2024</h2>
+
+<br><br>
+
+<div align="middle">
+
+<h2 align="middle">Overview</h2>
+<p>Overall, the project was fun and a nice refresher from hw3. The resulting cloth created ends up being fairly realistic or 
+  at least believable, and this shows the versatility of using springs and masses to simulate physical objects. My least favorite 
+  part of the project was part 5, because it just felt like some evil way to bring back up the trauma from project 3. Overall, the 
+  project was fun I guess.
+</p>
+
+<h2 align="middle">Part I: Masses and springs</h2>
+<p>
+  To build the grid, I looped through all the num_width_points and num_heigh_points to build each point in the grid. 
+  If the orientation is horizontal, for each x and z index, I calculated the position of the point mass to be added by multiplying it 
+  by the size of the horizontal or vertical steps in each direction, which equals width/(num_width_points-1) and height/(num_height_points-1), 
+  respesctively. I had to subtract one for the step size because we want a point to be exactly at 0 and at the width and height coordinates. For each 
+  point, after finding the coordinates, I made a new point mass and set pinned to be true if the point is in the pinned vector. Then, I added the point 
+  to point_masses. For vertical orientations, the process is mostly the same, except this time we are finding the x and y coordinates instead of x and z coordinates, 
+  so the step size for z would instead be the step size for y.
+</p>
+<p>
+  Then, once the point masses were made, I loop through all of them again, except this time adding springs along the way. I loop through the num_height_points and num_width_points in the 
+  same way, so at each step I have the height and width indexes of a particular point. From that point, I check if the current position isn't on an edge (eg if w>0 for structural springs) for 
+  each spring type, and then try to add each spring type to every mass. For shearing and bending springs, we do have to check in both directions, but the process to check and add springs is pretty 
+  much copy and paste for all spring types. For each spring, we make sure to add it to the springs vector. After that, we are done with the grid!
+</p>
+<div align="middle">
+  <table style="width:100%">
+    <tr align="center">
+      <td>
+        <img src="images/pinned2wire.png" align="middle" width="400px"/>
+        <figcaption>The wireframe for pinned2 with all 3 spring types</figcaption>
+      </td>
+      <td>
+        <img src="images/anotherangle.png" align="middle" width="400px"/>
+        <figcaption>Another angle</figcaption>
+      </td>
+    </tr>
+    <tr align="center">
+      <td>
+        <img src="images/asdf.png" align="middle" width="400px"/>
+        <figcaption>Pinned2 without shearing springs</figcaption>
+      </td>
+      <td>
+        <img src="images/asdf1.png" align="middle" width="400px"/>
+        <figcaption>Pinned2 with only shearing springs</figcaption>
+      </td>
+    </tr>
+  </table>
+</div>
+<br>
+<h2 align="middle">Part II: Simulation via numerical integration</h2>
+<p>
+  By changing the spring constant, we can make the cloth a lot more droopy or stiff, for low and high spring constants, 
+  respecitvely. See how in the high spring constant example, the cloth almost looks like a solid board, but in the low spring 
+  constant example, the cloth just droops down.
+</p>
+<div align="middle">
+  <table style="width:100%">
+    <tr align="center">
+      <td>
+        <img src="images/lowspring.png" align="middle" width="400px"/>
+        <figcaption>Low spring constant</figcaption>
+      </td>
+      <td>
+        <img src="images/highspring.png" align="middle" width="400px"/>
+        <figcaption>High spring constant</figcaption>
+      </td>
+    </tr>
+  </table>
+  <br>
+  <p>
+    For low density values, the cloth droops down less and has less creases, probably because generally springs are 
+    less loaded so the springs are overall nearer to their resting state. For high density, the cloth droops down more and 
+    many of the springs are stretched to their max, which is why there are a lot more sharp creases.
+  </p>
+  <div align="middle">
+    <table style="width:100%">
+      <tr align="center">
+        <td>
+          <img src="images/lowdensity.png" align="middle" width="400px"/>
+          <figcaption>Low density</figcaption>
+        </td>
+        <td>
+          <img src="images/highdensity.png" align="middle" width="400px"/>
+          <figcaption>High density</figcaption>
+        </td>
+      </tr>
+    </table>
+    <br>
+    <p>
+      For high and low damping values, the final result looks about the same as the default settings, but when the cloth is 
+      dropping, the low damping lags a lot and overall has way more bumps and is much more detailed. For high damping, when the cloth 
+      drops down, it's almost like a flat board with not much detail, but it runs faster.
+    </p>
+    <div align="middle">
+      <table style="width:100%">
+        <tr align="center">
+          <td>
+            <img src="images/lowdamping.png" align="middle" width="400px"/>
+            <figcaption>Low damping</figcaption>
+          </td>
+          <td>
+            <img src="images/highdamping.png" align="middle" width="400px"/>
+            <figcaption>High damping. The cloth is still falling down.</figcaption>
+          </td>
+        </tr>
+      </table>
+  <br>
+  <p>
+    Finally, here is pinned4 with default settings and displacement mapping with texture 1.
+  </p>
+  <div align="center">
+    <table>
+        <tr>
+            <td align="middle">
+            <img src="images/pinned4final.png" width="480px" />
+        </tr>
+    </table>
+  </div>
+  <br>
+  <h2 align="middle">Part III: Handling collisions with other objects</h2>
+  <p>
+    For sphere collisions, I first check if a point mass's position is inside the sphere by checking if the distance between it and 
+    the sphere's center is less than the radius of the sphere. If it is, then I find where the point should be if it were to collide on the surface 
+    of the sphere, then find the vector going from the last position of the point to that position, then add that vector to the last position, scaled down by friction. 
+  </p>
+  <p>
+    For plane collisions, the idea is similar. I first check of the last position of the point and the current position are on different sides of the plane by using 
+    the dot product of a point on the plane and the given position, and seeing if the result is positive or negative. Then, if the two positions are on different sides of the plane, I 
+    find where the point would have collided with the plane by using the ray intersection equation using the last position as the origin and the vector from the last position to current position as d. 
+    I then set the new position as the last position plus d times t, where t would lead to the plane collision, scaled down by friction.
+  </p>
+  <p>
+    The differences in ks changes how the cloth behaves. For higher ks, the springs are more stiff, so the cloth itself 
+    is more stiff, and ends up bending over less over the round edges of the sphere. For low ks, the cloth is less stiff and 
+    more bendy, and so the cloth ends up draping around the sphere more and hugs the sphere more closely. The lower the spring 
+    constant, the more frilly the edges of the cloth looks as the cloth bends into more curves when the spring constant is lower.
+  </p>
+  <div align="middle">
+    <table style="width:100%">
+      <tr align="center">
+        <td>
+          <img src="images/ks500.png" align="middle" width="400px"/>
+          <figcaption>ks=500</figcaption>
+        </td>
+        <td>
+          <img src="images/ks5000.png" align="middle" width="400px"/>
+          <figcaption>ks=5000</figcaption>
+        </td>
+      </tr>
+      <tr align="center">
+        <td>
+          <img src="images/ks50000.png" align="middle" width="400px"/>
+          <figcaption>ks=50000</figcaption>
+        </td>
+        <td>
+          <img src="images/ksmillion.png" align="middle" width="400px"/>
+          <figcaption>just for fun, here's ks=100000</figcaption>
+        </td>
+      </tr>
+    </table>
+  </div>
+  <p>The cloth resting peacefully on a plane. I used bump mapping just for fun. The texture of the plane 
+    appears to be kind of messed up, but that seems to be normal behavior for the plane object.
+  </p>
+  <div align="center">
+    <table>
+        <tr>
+            <td align="middle">
+            <img src="images/planecloth.png" width="480px" />
+        </tr>
+    </table>
+  </div>
+  <h2 align="middle">Part IV: Handling self-collisions</h2>
+  <p>Here is the self collision cloth falling on itself. </p>
+  <div align="middle">
+    <table style="width:100%">
+      <tr align="center">
+        <td>
+          <img src="images/early.png" align="middle" width="400px"/>
+          <figcaption>The cloth, early in its self collision</figcaption>
+        </td>
+        <td>
+          <img src="images/middle.png" align="middle" width="400px"/>
+          <figcaption>The cloth a little while later</figcaption>
+        </td>
+      </tr>
+      <tr align="center">
+        <td>
+          <img src="images/late.png" align="middle" width="400px"/>
+          <figcaption>The cloth once it has mostly settled</figcaption>
+        </td>
+        <td>
+          <img src="images/very_late.png" align="middle" width="400px"/>
+          <figcaption>The cloth a while after. It appears to have fully settled.</figcaption>
+        </td>
+      </tr>
+    </table>
+  </div>
+<br>
+<p>Here are some results with a higher spring constant, ks=50000. Notice how the cloth doesn't want to bend as much as doesn't 
+  make bends as sharp, which causes the cloth to ultimately settle being less folded and also having less bumps in the cloth itself.
+</p>
+<div align="middle">
+  <table style="width:100%">
+    <tr align="center">
+      <td>
+        <img src="images/highd.png" align="middle" width="400px"/>
+        <figcaption>The cloth shortly into the simulation. Notice the rounder/wider curves</figcaption>
+      </td>
+      <td>
+        <img src="images/highd2.png" align="middle" width="400px"/>
+        <figcaption>The cloth after it's fairly settled. Notice how it's less folded than the lower spring constants.</figcaption>
+      </td>
+    </tr>
+  </table>
+  <br>
+  <p>
+    Here are the results of using a low ks, ks=500. Notice how the cloth bends a lot more when it's falling, and also has much more bumps that ripple through 
+    as it falls. When it settles, it also has a shape that is more complex with more bumps and folds. The cloth also doesn't want to settle, still bouncing around and lagging 
+    a while after falling. The low ks reminds me of how it's like using low damping, with the cloth having more overall action and detail as it falls.
+  </p>
+  <div align="middle">
+    <table style="width:100%">
+      <tr align="center">
+        <td>
+          <img src="images/lowd.png" align="middle" width="400px"/>
+          <figcaption>The cloth shortly into the simulation.</figcaption>
+        </td>
+        <td>
+          <img src="images/lowd2.png" align="middle" width="400px"/>
+          <figcaption>The cloth after it's fairly settled. </figcaption>
+        </td>
+      </tr>
+    </table>
+    <br>
+    <p>
+      Here is the cloth falling with high density, 150g/cm^2. The cloth behaves similarly to having low spring constant, 
+      as when the cloth falls its high density overwhelms the springs, causing the bottom to fold in on itself a lot. The difference is that 
+      as the cloth is falling, when the bottom half is starting to get folded, the top still looks relatively unaffected. This is kind of like how it looks 
+      when they demolish buildings and blow up the base, causing the building to seemingly just fall straight down into the ground. As it falls, the bottom 
+      of the cloth just collapses into itself just like that.
+    </p>
+    <div align="middle">
+      <table style="width:100%">
+        <tr align="center">
+          <td>
+            <img src="images/hd.png" align="middle" width="400px"/>
+            <figcaption>The cloth shortly into the simulation.</figcaption>
+          </td>
+          <td>
+            <img src="images/hd2.png" align="middle" width="400px"/>
+            <figcaption>The cloth after it's fairly settled. </figcaption>
+          </td>
+        </tr>
+      </table>
+    </div>
+      <br>
+      <p>
+        Here is the cloth with low density, 1.5g/cm^2. This is similar to the high ks cloth, as the cloth doesn't have enough mass to overcome the spring forces 
+        so the cloth resists bending more, causing the cloth to have rounder, wider and less bends. 
+      </p>
+      <div align="middle">
+        <table style="width:100%">
+          <tr align="center">
+            <td>
+              <img src="images/ld.png" align="middle" width="400px"/>
+              <figcaption>The cloth shortly into the simulation.</figcaption>
+            </td>
+            <td>
+              <img src="images/ld2.png" align="middle" width="400px"/>
+              <figcaption>The cloth after it's fairly settled. </figcaption>
+            </td>
+          </tr>
+        </table>
+  <br>
+  <h2 align="middle">Part V: Cloth Sim</h2>
+  <p>For shaders, we use OpenGL so we can access the powers of the GPU when rendering realistic lighting. To do this, we use both vertex and fragment shaders, which 
+    are written in GLSL, a C-like language. Vertex shaders take in things like a vertex's position, texel, and normal, and output similar things to the fragment shader. The 
+    key here is that the vertex shader also sets gl_Position, where is where the vertex would actually be rasterized on the screen. This is important because changing this allows us 
+    to do displacement mapping, which requires changing the position of vertices to create visible bumps. The fragment shader then takes in all the information about a given vertex from the 
+    vertex shader, and computes the final output color using that information, taking into account things such as lighting and angles. So in the end, these two things work together, with the vertex 
+    shader computing the geometric properties of the vertex, such as its position, and the fragment shader computing its final output color.
+  </p>
+  <p>
+    Phong shading is a shading model that takes into account three things: diffuse lighting, spectral highlights, and ambient lighting. Diffuse lighting is what gives object its matte appearance, and mainly 
+    only depends on the total average light coming into a certain area. Thus, the same location would have the same diffuse lighting no matter which angle you look at it from. Spectral highlights are like the glossy 
+    reflections of a surface, usually being very bright and mostly white. These depend on the angle you view the object from, unlike diffuse lighting. Finally, ambient lighting in the Phong model is just a constant light 
+    that is added to everything so that shadows aren't completely pitch black. Here are screenshots of the sphere with different aspects of the blinn-phong model:
+  </p>
+  <div align="middle">
+    <table style="width:100%">
+      <tr align="center">
+        <td>
+          <img src="images/diffuse.png" align="middle" width="400px"/>
+          <figcaption>Only diffuse lighting. Notice the pitch black shadows</figcaption>
+        </td>
+        <td>
+          <img src="images/spec.png" align="middle" width="400px"/>
+          <figcaption>Only spec</figcaption>
+        </td>
+      </tr>
+      <tr align="center">
+        <td>
+          <img src="images/ambient.png" align="middle" width="400px"/>
+          <figcaption>Only ambient. Notice the lack of detail</figcaption>
+        </td>
+        <td>
+          <img src="images/phong.png" align="middle" width="400px"/>
+          <figcaption>Full phong shading. Now, balance is restored in the universe</figcaption>
+        </td>
+      </tr>
+    </table>
+    <br>
+    <p>Here is my custom texture mapping shaded sphere cloth:</p>
+    <img src="images/flan.png" align="middle" width="650"/>
+        <figcaption>flan</figcaption>
+  </div>
+  <br>
+  <br>
+  <p>
+    Here are the bump and displacement mappings for a pizza texture I chose, which unfortunately doesn't really look like 
+    a pizzal without the colors being sampled from the texture. Here is the texture:
+  </p>
+  <img src="images/pizza.png" align="middle" width="400"/>
+        <figcaption>The texture I used for bump and displacement mapping</figcaption>
+  <p>Here are the bump and displacement mapping results. Notice how in the displacement mapping, the shape of the sphere and cloth are different, as the positions of pixels are 
+    correctly being raised in accordance to the height given by the texture. I had to scale h down a lot for the displacement mapping, because otherwise the displacement woulud be way too big.
+  </p>
+  <table style="width:100%">
+    <tr align="center">
+      <td>
+        <img src="images/bump.png" align="middle" width="400px"/>
+        <figcaption>The bump mapping result</figcaption>
+      </td>
+      <td>
+        <img src="images/d.png" align="middle" width="400px"/>
+        <figcaption>The displacement mapping result</figcaption>
+      </td>
+    </tr>
+  </table>
+  <br>
+  <p>Here are the results with increased texture courseness, -o 16 and -a 16. Though it is hard to tell, notice 
+    how there is slightly more contrast for the texture compared to without increasing texture courseness.
+  </p>
+  <table style="width:100%">
+    <tr align="center">
+      <td>
+        <img src="images/bump2.png" align="middle" width="400px"/>
+        <figcaption>The bump mapping result</figcaption>
+      </td>
+      <td>
+        <img src="images/d16.png" align="middle" width="400px"/>
+        <figcaption>The displacement mapping result</figcaption>
+      </td>
+    </tr>
+  </table>
+  <br>
+  <p>Here, -o 128 and -a 128. It is a bit easier to tell that the resulting textures have more of an impact on the final result, with darker 
+    edges. Also, on the displacement mapping result, you can see that the bumps seem to be more individual and detailed, and you can actually see individual 
+    bumps on the surface if you look closely.
+  </p>
+  <table style="width:100%">
+    <tr align="center">
+      <td>
+        <img src="images/bump3.png" align="middle" width="400px"/>
+        <figcaption>The bump mapping result</figcaption>
+      </td>
+      <td>
+        <img src="images/d128.png" align="middle" width="400px"/>
+        <figcaption>The displacement mapping result</figcaption>
+      </td>
+    </tr>
+  </table>
+
+  <br>
+  <p>These are the mirror texture results.
+  </p>
+  <table style="width:100%">
+    <tr align="center">
+      <td>
+        <img src="images/mirror.png" align="middle" width="400px"/>
+        <figcaption>The sphere</figcaption>
+      </td>
+      <td>
+        <img src="images/mirror1.png" align="middle" width="400px"/>
+        <figcaption>The cloth on the sphere</figcaption>
+      </td>
+    </tr>
+  </table>
+</div>
+</body>
 </html>
